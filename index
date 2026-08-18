@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BYKOL 项目原型门户导航</title>
+    <title>收单 项目原型门户导航</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -13,7 +13,7 @@
             color: #0f172a; 
             margin: 0;
         }
-        .container { max-width: 880px; margin: 0 auto; }
+        .container { max-width: 880px; margin: 0 auto; }ƒ
         .header { margin-bottom: 32px; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; }
         h1 { font-size: 22px; font-weight: 600; color: #1e293b; margin: 0 0 8px 0; }
         p.subtitle { margin: 0; color: #64748b; font-size: 14px; }
