@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BYKOL 项目原型门户导航</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            padding: 40px 20px; 
+            background: #f8fafc; 
+            color: #0f172a; 
+            margin: 0;
+        }
+        .container { max-width: 880px; margin: 0 auto; }
+        .header { margin-bottom: 32px; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; }
+        h1 { font-size: 22px; font-weight: 600; color: #1e293b; margin: 0 0 8px 0; }
+        p.subtitle { margin: 0; color: #64748b; font-size: 14px; }
+        .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        .card { 
+            display: flex; 
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px; 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            color: inherit; 
+            transition: all 0.2s ease;
+        }
+        .card:hover { 
+            border-color: #2563eb; 
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08); 
+            transform: translateY(-2px);
+        }
+        .card-title { font-size: 16px; font-weight: 600; color: #1d4ed8; margin: 0 0 8px 0; }
+        .card-desc { margin: 0 0 16px 0; color: #64748b; font-size: 13px; line-height: 1.5; }
+        .card-tag { 
+            align-self: flex-start;
+            font-size: 12px; 
+            padding: 2px 8px; 
+            background: #f1f5f9; 
+            color: #475569; 
+            border-radius: 4px; 
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BYKOL 项目原型门户导航</h1>
+            <p class="subtitle">包含paypal收单运营端、白标收单 演示模块</p>
+        </div>
+
+        <div class="grid">
+            <!-- 1. PayPal收单 - 运营端 -->
+            <a href="./paypal_operations_wallet_statistics.html" class="card">
+                <div>
+                    <div class="card-title">运营端 - 商户资金统计</div>
+                    <p class="card-desc">商户资金统计，支持切换PayPal和wildcard pay。</p>
+                </div>
+                <span class="card-tag">PC 运营端</span>
+            </a>
