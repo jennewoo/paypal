@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>运营端 - 收单商户资金统计</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --border: #e8edf5;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --blue: #3b82f6;
+      --purple: #6366f1;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 232px;
+      background: #0f172a;
+      color: rgba(255,255,255,0.9);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .brand {
+      padding: 0 22px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 14px;
+    }
+    .brand h1 {
+      font-size: 18px;
+      line-height: 1.2;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .brand p {
+      margin: 8px 0 0;
+      color: rgba(255,255,255,0.55);
+      font-size: 12px;
+    }
+    .nav-group {
+      padding: 0 12px;
+      margin-top: 8px;
+    }
+    .nav-title {
+      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+      padding: 12px 10px 8px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      margin: 4px 0;
+      border-radius: 10px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.06); }
+    .nav-item.active {
+      background: rgba(59,130,246,0.2);
+      color: #fff;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .9;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .topbar {
+      height: 68px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 26px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .topbar-left h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .topbar-left p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .chip {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 10px;
+      color: #374151;
+      font-size: 13px;
+    }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #60a5fa, #818cf8);
+      color: #fff; display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top-width: 4px;
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+      min-height: 150px;
+    }
+    .card.purple { border-top-color: var(--purple); }
+    .card.orange { border-top-color: var(--orange); }
+    .card.blue { border-top-color: var(--blue); }
+    .card.green { border-top-color: var(--green); }
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #374151;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+    .status-dot {
+      width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      border: 1px solid currentColor;
+    }
+    .purple .status-dot { color: var(--purple); }
+    .orange .status-dot { color: var(--orange); }
+    .blue .status-dot { color: var(--blue); }
+    .green .status-dot { color: var(--green); }
+    .money {
+      font-size: 18px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .money strong {
+      font-size: 34px;
+      color: #111827;
+      letter-spacing: -.5px;
+      margin-right: 8px;
+    }
+    .subline {
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .btn-primary {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      height: 40px;
+      background: linear-gradient(135deg, #3ba1ff, #2696ea);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .mini-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+    }
+    .mini-card .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .mini-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .mini-card .hint {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title h3 {
+      margin: 0;
+      font-size: 22px;
+    }
+    .panel-title p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      height: 38px;
+      padding: 0 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      color: #374151;
+    }
+    .btn.blue {
+      border-color: #2d8cf0;
+      background: #2d8cf0;
+      color: #fff;
+    }
+
+    .filters {
+      padding: 16px 20px 6px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .field label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .control, select {
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: #111827;
+      background: #fff;
+      width: 100%;
+      outline: none;
+    }
+    .field.actions {
+      justify-content: flex-end;
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .table-wrap {
+      padding: 14px 20px 10px;
+      overflow: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 1320px;
+    }
+    thead th {
+      text-align: left;
+      font-size: 13px;
+      color: #4b5563;
+      background: #f8fafc;
+      padding: 14px 12px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    thead th:first-child { border-left: 1px solid var(--border); border-top-left-radius: 10px; }
+    thead th:last-child { border-right: 1px solid var(--border); border-top-right-radius: 10px; }
+    tbody td {
+      background: #fff;
+      padding: 16px 12px;
+      border-bottom: 1px solid var(--border);
+      color: #111827;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+    tbody tr td:first-child { border-left: 1px solid var(--border); }
+    tbody tr td:last-child { border-right: 1px solid var(--border); }
+    tbody tr:hover td { background: #fcfdff; }
+    .merchant {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .merchant strong { font-size: 14px; }
+    .merchant span { color: var(--muted); font-size: 12px; }
+    .muted { color: var(--muted); }
+    .money-cell { font-weight: 700; white-space: nowrap; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #eff6ff;
+      color: #2563eb;
+    }
+    .status::before {
+      content: '';
+      width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+    }
+    .status.warn { background: #fff7ed; color: #d97706; }
+    .status.gray { background: #f3f4f6; color: #6b7280; }
+    .text-btn {
+      color: #2d8cf0;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .footer-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px 20px;
+      color: var(--muted);
+      font-size: 13px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .pagination {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .page {
+      width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+      display: inline-flex; align-items: center; justify-content: center; background: #fff; color: #4b5563;
+    }
+    .page.active { background: #2d8cf0; color: #fff; border-color: #2d8cf0; }
+
+    .drawer-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.28);
+      display: none;
+      z-index: 40;
+    }
+    .drawer-mask.show { display: block; }
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -560px;
+      width: 560px;
+      max-width: 100%;
+      height: 100vh;
+      background: #fff;
+      box-shadow: -16px 0 40px rgba(15, 23, 42, 0.18);
+      transition: right .25s ease;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.open { right: 0; }
+    .drawer-head {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+    }
+    .drawer-head h3 { margin: 0; font-size: 22px; }
+    .drawer-head p { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+    .close-btn {
+      border: none; background: #f3f4f6; width: 34px; height: 34px; border-radius: 10px; cursor: pointer;
+      font-size: 18px; color: #4b5563;
+    }
+    .drawer-body {
+      padding: 18px 22px 24px;
+      overflow: auto;
+      flex: 1;
+      background: #fbfcfe;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .detail-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .detail-card .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .detail-card .value { font-size: 26px; font-weight: 700; }
+    .info-panel, .sub-panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .info-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .key { color: var(--muted); }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px 0;
+    }
+    .tab {
+      padding: 10px 14px;
+      border-radius: 10px 10px 0 0;
+      background: #f8fafc;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 14px;
+      border: 1px solid transparent;
+      border-bottom: none;
+    }
+    .tab.active {
+      color: #2563eb;
+      background: #fff;
+      border-color: var(--border);
+    }
+    .tab-content {
+      display: none;
+      padding: 0 16px 16px;
+    }
+    .tab-content.active { display: block; }
+    .mini-table {
+      width: 100%;
+      min-width: auto;
+    }
+    .mini-table thead th, .mini-table tbody td {
+      font-size: 13px;
+      padding: 12px 10px;
+    }
+    .highlight { color: #2563eb; font-weight: 600; }
+    @media (max-width: 1400px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stats-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1120px) {
+      .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 980px) {
+      .sidebar { display: none; }
+      .cards, .stats-row, .filters, .detail-grid { grid-template-columns: 1fr; }
+      .topbar { height: auto; padding: 16px; align-items: flex-start; gap: 10px; flex-direction: column; }
+      .panel-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>运营管理后台</h1>
+        <p>PayPal 收单商户资金管理</p>
+      </div>
+      <div class="nav-group">
+        <div class="nav-item active"><span class="dot"></span>收单商户资金统计</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-left">
+          <h2>收单商户资金统计</h2>
+          <p>面向运营人员查看所有收单商户的余额、提现与累计收单情况，可快速定位商户并查看资金明细。</p>
+        </div>
+        <div class="topbar-right">
+          <div class="chip">统计币种：USD</div>
+          <div class="chip">统计周期：累计 + 近30天活跃</div>
+          <div class="avatar">OP</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <section class="cards">
+          <div class="card purple">
+            <div class="card-head"><span class="status-dot">¥</span><span>可提现总金额</span></div>
+            <div class="money"><strong>$ 128,920.32</strong>USD</div>
+            <button class="btn-primary" id="goWithdraw">查看提现记录</button>
+          </div>
+          <div class="card orange">
+            <div class="card-head"><span class="status-dot">!</span><span>提现中金额</span></div>
+            <div class="money"><strong>$ 19,880.00</strong>USD</div>
+            <div class="subline">当前共有 23 笔银行处理中提现，预计 1-2 个工作日内到账</div>
+          </div>
+          <div class="card blue">
+            <div class="card-head"><span class="status-dot">✓</span><span>已提现金额</span></div>
+            <div class="money"><strong>$ 1,826,543.66</strong>USD</div>
+            <div class="subline">累计 1,426 笔提现已成功结算至商户银行账户</div>
+          </div>
+          <div class="card green">
+            <div class="card-head"><span class="status-dot">$</span><span>收单总金额</span></div>
+            <div class="money"><strong>$ 1,975,344.98</strong>USD</div>
+            <div class="subline">累计所有收单商户成功收单总金额</div>
+          </div>
+        </section>
+
+        <section class="stats-row">
+          <div class="mini-card">
+            <div class="label">收单商户数</div>
+            <div class="value">126</div>
+            <div class="hint">当前已接入并可正常收单</div>
+          </div>
+          <div class="mini-card">
+            <div class="label">有余额商户</div>
+            <div class="value">83</div>
+            <div class="hint">当前可提现金额大于 0</div>
+          </div>
+          <div class="mini-card">
+            <div class="label">近30天活跃商户</div>
+            <div class="value">97</div>
+            <div class="hint">近 30 天有新增收单</div>
+          </div>
+          <div class="mini-card">
+            <div class="label">近30天收单金额</div>
+            <div class="value">$286K</div>
+            <div class="hint">较上月 <span class="highlight">+18.6%</span></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h3>商户资金列表</h3>
+              <p>支持按商户别名、店铺名称、PayPal 账号、币种和时间范围筛选；列表展示当前余额与累计资金数据。</p>
+            </div>
+            <div class="toolbar">
+              <button class="btn">重置筛选</button>
+              <button class="btn">刷新数据</button>
+              <button class="btn blue">导出数据</button>
+            </div>
+          </div>
+
+          <div class="filters">
+            <div class="field">
+              <label>商户别名</label>
+              <input class="control" id="merchantSearch" placeholder="请输入商户别名" />
+            </div>
+            <div class="field">
+              <label>店铺名称</label>
+              <input class="control" id="storeSearch" placeholder="请输入店铺名称" />
+            </div>
+            <div class="field">
+              <label>PayPal账号</label>
+              <input class="control" id="paypalSearch" placeholder="请输入 PayPal 账号" />
+            </div>
+            <div class="field">
+              <label>币种</label>
+              <select id="currencyFilter">
+                <option value="">全部币种</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>统计时间</label>
+              <input class="control" type="date" id="dateFilter" />
+            </div>
+            <div class="field actions">
+              <button class="btn" id="resetBtn">重置</button>
+              <button class="btn blue" id="searchBtn">查询</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 180px;">商户别名</th>
+                  <th style="width: 220px;">店铺名称</th>
+                  <th style="width: 200px;">PayPal账号</th>
+                  <th style="width: 72px;">币种</th>
+                  <th style="width: 130px;">可提现金额</th>
+                  <th style="width: 130px;">提现中金额</th>
+                  <th style="width: 130px;">已提现金额</th>
+                  <th style="width: 130px;">近30天收单</th>
+                  <th style="width: 130px;">收单总金额</th>
+                  <th style="width: 140px;">最近收单时间</th>
+                  <th style="width: 88px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="merchantTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="footer-bar">
+            <div>共 <strong id="totalCount">0</strong> 条商户记录</div>
+            <div class="pagination">
+              <span>10条/页</span>
+              <span class="page">‹</span>
+              <span class="page active">1</span>
+              <span class="page">2</span>
+              <span class="page">3</span>
+              <span class="page">›</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="drawer-mask" id="drawerMask"></div>
+  <aside class="drawer" id="detailDrawer">
+    <div class="drawer-head">
+      <div>
+        <h3 id="drawerTitle">商户资金详情</h3>
+        <p id="drawerSubtitle">查看商户的基础信息、当前资金概览、收单账户和近期提现/收单流水。</p>
+      </div>
+      <button class="close-btn" id="closeDrawer">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="label">可提现金额</div>
+          <div class="value" id="detailAvailable">$0.00</div>
+        </div>
+        <div class="detail-card">
+          <div class="label">提现中金额</div>
+          <div class="value" id="detailWithdrawing">$0.00</div>
+        </div>
+        <div class="detail-card">
+          <div class="label">已提现金额</div>
+          <div class="value" id="detailWithdrawn">$0.00</div>
+        </div>
+        <div class="detail-card">
+          <div class="label">收单总金额</div>
+          <div class="value" id="detailCollected">$0.00</div>
+        </div>
+      </div>
+
+      <div class="info-panel">
+        <div class="info-row"><div class="key">商户别名</div><div id="infoName">-</div></div>
+        <div class="info-row"><div class="key">店铺名称</div><div id="infoStoreName">-</div></div>
+        <div class="info-row"><div class="key">PayPal主账号</div><div id="infoPaypal">-</div></div>
+        <div class="info-row"><div class="key">最近收单时间</div><div id="infoRecent">-</div></div>
+      </div>
+
+      <div class="sub-panel">
+        <div class="tabs">
+          <div class="tab active" data-tab="accounts">收单账户</div>
+          <div class="tab" data-tab="transactions">资金流水</div>
+          <div class="tab" data-tab="withdrawals">提现记录</div>
+        </div>
+
+        <div class="tab-content active" id="tab-accounts">
+          <div class="table-wrap" style="padding: 16px;">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>PayPal账号</th>
+                  <th>币种</th>
+                  <th>可提现</th>
+                  <th>提现中</th>
+                  <th>已提现</th>
+                  <th>收单总额</th>
+                </tr>
+              </thead>
+              <tbody id="accountRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-transactions">
+          <div class="table-wrap" style="padding: 16px;">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>交易流水号</th>
+                  <th>订单号</th>
+                  <th>交易金额</th>
+                  <th>手续费</th>
+                  <th>实际入账</th>
+                  <th>交易状态</th>
+                  <th>交易时间</th>
+                </tr>
+              </thead>
+              <tbody id="transactionRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-withdrawals">
+          <div class="table-wrap" style="padding: 16px;">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>提现流水号</th>
+                  <th>提现金额</th>
+                  <th>提现至</th>
+                  <th>交易状态</th>
+                  <th>失败原因</th>
+                  <th>创建时间</th>
+                </tr>
+              </thead>
+              <tbody id="withdrawalRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const merchants = [
+      {
+        id: 1,
+        name: 'FAINE',
+        storeName: 'Faine Official Store',
+        paypal: 'fainestore-us@paypal.com',
+        currency: 'USD',
+        available: 1989.88,
+        withdrawing: 0,
+        withdrawn: 0,
+        collected30: 1989.88,
+        collectedTotal: 1989.88,
+        recentTime: '2026-08-18 09:32',
+        accountCount: 1,
+        accounts: [
+          { paypal: 'fainestore-us@paypal.com', currency: 'USD', available: 1989.88, withdrawing: 0, withdrawn: 0, total: 1989.88 }
+        ],
+        transactions: [
+          { no: 'PAYIN20260818093201', order: 'ORD-FAINE-20260818-01', amount: '$1,120.00', fee: '$56.00', net: '$1,064.00', status: 'SUCCESS', time: '2026-08-18 09:32' },
+          { no: 'PAYIN20260817081511', order: 'ORD-FAINE-20260817-02', amount: '$869.88', fee: '$43.49', net: '$826.39', status: 'SUCCESS', time: '2026-08-17 08:15' }
+        ],
+        withdrawals: [
+          { no: 'WD202608160001', amount: '$0.00', bank: '-', status: '暂无', reason: '-', time: '-' }
+        ]
+      },
+      {
+        id: 2,
+        name: 'ABC',
+        storeName: 'ABC Home & Living',
+        paypal: 'abc-store-main@paypal.com',
+        currency: 'USD',
+        available: 8520.30,
+        withdrawing: 1200,
+        withdrawn: 38200,
+        collected30: 17320.52,
+        collectedTotal: 47920.30,
+        recentTime: '2026-08-18 08:16',
+        accountCount: 3,
+        accounts: [
+          { paypal: 'abc-store-main@paypal.com', currency: 'USD', available: 5200.00, withdrawing: 300.00, withdrawn: 20000.00, total: 25500.00 },
+          { paypal: 'abc-store-eu@paypal.com', currency: 'USD', available: 1820.30, withdrawing: 0, withdrawn: 10200.00, total: 12020.30 },
+          { paypal: 'abc-store-sub@paypal.com', currency: 'USD', available: 1500.00, withdrawing: 900.00, withdrawn: 8000.00, total: 10400.00 }
+        ],
+        transactions: [
+          { no: 'PAYIN20260818081601', order: 'ORD-ABC-20260818-01', amount: '$3,600.00', fee: '$180.00', net: '$3,420.00', status: 'SUCCESS', time: '2026-08-18 08:16' },
+          { no: 'PAYIN20260817172110', order: 'ORD-ABC-20260817-08', amount: '$2,240.50', fee: '$112.03', net: '$2,128.47', status: 'SUCCESS', time: '2026-08-17 17:21' }
+        ],
+        withdrawals: [
+          { no: 'WD202608170021', amount: '$1,200.00', bank: 'Bank of America (****3381)', status: '处理中', reason: '-', time: '2026-08-17 18:02' },
+          { no: 'WD202608090031', amount: '$5,800.00', bank: 'Bank of America (****3381)', status: '成功', reason: '-', time: '2026-08-09 11:05' }
+        ]
+      },
+      {
+        id: 3,
+        name: 'FASHION-US',
+        storeName: 'Fashion US Flagship Store',
+        paypal: 'fashion.us.pay@paypal.com',
+        currency: 'USD',
+        available: 12680.20,
+        withdrawing: 850.00,
+        withdrawn: 62100.00,
+        collected30: 24180.62,
+        collectedTotal: 75630.20,
+        recentTime: '2026-08-17 23:42',
+        accountCount: 2,
+        accounts: [
+          { paypal: 'fashion.us.pay@paypal.com', currency: 'USD', available: 9680.20, withdrawing: 850.00, withdrawn: 42100.00, total: 52630.20 },
+          { paypal: 'fashion.outlet@paypal.com', currency: 'USD', available: 3000.00, withdrawing: 0, withdrawn: 20000.00, total: 23000.00 }
+        ],
+        transactions: [
+          { no: 'PAYIN20260817234201', order: 'ORD-FUS-20260817-01', amount: '$6,200.00', fee: '$310.00', net: '$5,890.00', status: 'SUCCESS', time: '2026-08-17 23:42' },
+          { no: 'PAYIN20260816140501', order: 'ORD-FUS-20260816-06', amount: '$4,150.62', fee: '$207.53', net: '$3,943.09', status: 'SUCCESS', time: '2026-08-16 14:05' }
+        ],
+        withdrawals: [
+          { no: 'WD202608150017', amount: '$850.00', bank: 'Chase Bank (****2872)', status: '处理中', reason: '-', time: '2026-08-15 09:30' },
+          { no: 'WD202608050012', amount: '$4,200.00', bank: 'Chase Bank (****2872)', status: '成功', reason: '-', time: '2026-08-05 16:21' }
+        ]
+      },
+      {
+        id: 4,
+        name: 'GB-EU',
+        storeName: 'Global Beauty Europe',
+        paypal: 'global-beauty@paypal.com',
+        currency: 'EUR',
+        available: 6320.50,
+        withdrawing: 0,
+        withdrawn: 18590.00,
+        collected30: 9800.40,
+        collectedTotal: 24910.50,
+        recentTime: '2026-08-17 18:06',
+        accountCount: 1,
+        accounts: [
+          { paypal: 'global-beauty@paypal.com', currency: 'EUR', available: 6320.50, withdrawing: 0, withdrawn: 18590.00, total: 24910.50 }
+        ],
+        transactions: [
+          { no: 'PAYIN20260817180601', order: 'ORD-GB-20260817-03', amount: '€2,300.00', fee: '€115.00', net: '€2,185.00', status: 'SUCCESS', time: '2026-08-17 18:06' },
+          { no: 'PAYIN20260815095116', order: 'ORD-GB-20260815-08', amount: '€1,880.40', fee: '€94.02', net: '€1,786.38', status: 'SUCCESS', time: '2026-08-15 09:51' }
+        ],
+        withdrawals: [
+          { no: 'WD202608030045', amount: '€3,500.00', bank: 'Deutsche Bank (****6129)', status: '成功', reason: '-', time: '2026-08-03 13:15' }
+        ]
+      },
+      {
+        id: 5,
+        name: 'TRENDY-UK',
+        storeName: 'Trendy Home UK',
+        paypal: 'trendyhome@paypal.com',
+        currency: 'GBP',
+        available: 0,
+        withdrawing: 320.00,
+        withdrawn: 14580.00,
+        collected30: 4200.25,
+        collectedTotal: 14580.00,
+        recentTime: '2026-08-12 10:58',
+        accountCount: 1,
+        accounts: [
+          { paypal: 'trendyhome@paypal.com', currency: 'GBP', available: 0, withdrawing: 320.00, withdrawn: 14580.00, total: 14580.00 }
+        ],
+        transactions: [
+          { no: 'PAYIN20260812105801', order: 'ORD-TH-20260812-11', amount: '£1,200.25', fee: '£60.01', net: '£1,140.24', status: 'SUCCESS', time: '2026-08-12 10:58' },
+          { no: 'PAYIN20260810224801', order: 'ORD-TH-20260810-07', amount: '£1,650.00', fee: '£82.50', net: '£1,567.50', status: 'SUCCESS', time: '2026-08-10 22:48' }
+        ],
+        withdrawals: [
+          { no: 'WD202608130008', amount: '£320.00', bank: 'HSBC (****7661)', status: '失败', reason: '银行账户信息校验失败', time: '2026-08-13 08:21' }
+        ]
+      },
+      {
+        id: 6,
+        name: 'NORTH',
+        storeName: 'North Mall Official Store',
+        paypal: 'northmall@paypal.com',
+        currency: 'USD',
+        available: 34220.00,
+        withdrawing: 5600.00,
+        withdrawn: 210500.00,
+        collected30: 76450.00,
+        collectedTotal: 250320.00,
+        recentTime: '2026-08-18 07:44',
+        accountCount: 4,
+        accounts: [
+          { paypal: 'northmall@paypal.com', currency: 'USD', available: 14220.00, withdrawing: 2600.00, withdrawn: 90500.00, total: 107320.00 },
+          { paypal: 'northmall-1@paypal.com', currency: 'USD', available: 8000.00, withdrawing: 0, withdrawn: 40000.00, total: 48000.00 },
+          { paypal: 'northmall-2@paypal.com', currency: 'USD', available: 7000.00, withdrawing: 2000.00, withdrawn: 50000.00, total: 59000.00 },
+          { paypal: 'northmall-3@paypal.com', currency: 'USD', available: 5000.00, withdrawing: 1000.00, withdrawn: 30000.00, total: 36000.00 }
+        ],
+        transactions: [
+          { no: 'PAYIN20260818074402', order: 'ORD-NM-20260818-02', amount: '$15,600.00', fee: '$780.00', net: '$14,820.00', status: 'SUCCESS', time: '2026-08-18 07:44' },
+          { no: 'PAYIN20260817212009', order: 'ORD-NM-20260817-09', amount: '$9,800.00', fee: '$490.00', net: '$9,310.00', status: 'SUCCESS', time: '2026-08-17 21:20' }
+        ],
+        withdrawals: [
+          { no: 'WD202608180014', amount: '$3,600.00', bank: 'Citibank (****4501)', status: '处理中', reason: '-', time: '2026-08-18 08:10' },
+          { no: 'WD202608070021', amount: '$12,500.00', bank: 'Citibank (****4501)', status: '成功', reason: '-', time: '2026-08-07 15:18' }
+        ]
+      }
+    ];
+
+    const tbody = document.getElementById('merchantTableBody');
+    const totalCount = document.getElementById('totalCount');
+    const merchantSearch = document.getElementById('merchantSearch');
+    const storeSearch = document.getElementById('storeSearch');
+    const paypalSearch = document.getElementById('paypalSearch');
+    const currencyFilter = document.getElementById('currencyFilter');
+    const dateFilter = document.getElementById('dateFilter');
+
+    const formatMoney = (num, currency = 'USD') => {
+      const symbolMap = { USD: '$', EUR: '€', GBP: '£' };
+      const symbol = symbolMap[currency] || '$';
+      return `${symbol}${Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
+    function renderTable(list) {
+      tbody.innerHTML = list.map(item => `
+        <tr>
+          <td>
+            <div class="merchant">
+              <strong>${item.name}</strong>
+            </div>
+          </td>
+          <td>${item.storeName}</td>
+          <td>${item.paypal}</td>
+          <td>${item.currency}</td>
+          <td class="money-cell">${formatMoney(item.available, item.currency)}</td>
+          <td class="money-cell">${formatMoney(item.withdrawing, item.currency)}</td>
+          <td class="money-cell">${formatMoney(item.withdrawn, item.currency)}</td>
+          <td class="money-cell">${formatMoney(item.collected30, item.currency)}</td>
+          <td class="money-cell">${formatMoney(item.collectedTotal, item.currency)}</td>
+          <td>${item.recentTime}</td>
+          <td><span class="text-btn" onclick="openDrawer(${item.id})">查看</span></td>
+        </tr>
+      `).join('');
+      totalCount.textContent = list.length;
+    }
+
+    function filterData() {
+      const merchantKey = merchantSearch.value.trim().toLowerCase();
+      const storeKey = storeSearch.value.trim().toLowerCase();
+      const paypalKey = paypalSearch.value.trim().toLowerCase();
+      const currency = currencyFilter.value;
+      const date = dateFilter.value;
+
+      const result = merchants.filter(item => {
+        const matchMerchant = !merchantKey || item.name.toLowerCase().includes(merchantKey);
+        const matchStore = !storeKey || item.storeName.toLowerCase().includes(storeKey);
+        const matchPaypal = !paypalKey || item.paypal.toLowerCase().includes(paypalKey);
+        const matchCurrency = !currency || item.currency === currency;
+        const matchDate = !date || item.recentTime.startsWith(date);
+        return matchMerchant && matchStore && matchPaypal && matchCurrency && matchDate;
+      });
+      renderTable(result);
+    }
+
+    function resetFilters() {
+      merchantSearch.value = '';
+      storeSearch.value = '';
+      paypalSearch.value = '';
+      currencyFilter.value = '';
+      dateFilter.value = '';
+      renderTable(merchants);
+    }
+
+    const drawer = document.getElementById('detailDrawer');
+    const drawerMask = document.getElementById('drawerMask');
+    const closeDrawer = document.getElementById('closeDrawer');
+    window.openDrawer = function(id) {
+      const item = merchants.find(m => m.id === id);
+      if (!item) return;
+      document.getElementById('drawerTitle').textContent = `${item.name} · 资金详情`;
+      document.getElementById('drawerSubtitle').textContent = `${item.storeName} · 可查看 ${item.accountCount} 个 PayPal 收单账号及近期资金流水`;
+      document.getElementById('detailAvailable').textContent = formatMoney(item.available, item.currency);
+      document.getElementById('detailWithdrawing').textContent = formatMoney(item.withdrawing, item.currency);
+      document.getElementById('detailWithdrawn').textContent = formatMoney(item.withdrawn, item.currency);
+      document.getElementById('detailCollected').textContent = formatMoney(item.collectedTotal, item.currency);
+      document.getElementById('infoName').textContent = item.name;
+      document.getElementById('infoStoreName').textContent = item.storeName;
+      document.getElementById('infoPaypal').textContent = item.paypal;
+      document.getElementById('infoRecent').textContent = item.recentTime;
+      document.getElementById('accountRows').innerHTML = item.accounts.map(acc => `
+        <tr>
+          <td>${acc.paypal}</td>
+          <td>${acc.currency}</td>
+          <td class="money-cell">${formatMoney(acc.available, acc.currency)}</td>
+          <td class="money-cell">${formatMoney(acc.withdrawing, acc.currency)}</td>
+          <td class="money-cell">${formatMoney(acc.withdrawn, acc.currency)}</td>
+          <td class="money-cell">${formatMoney(acc.total, acc.currency)}</td>
+        </tr>
+      `).join('');
+      document.getElementById('transactionRows').innerHTML = item.transactions.map(tx => `
+        <tr>
+          <td>${tx.no}</td>
+          <td>${tx.order}</td>
+          <td>${tx.amount}</td>
+          <td>${tx.fee}</td>
+          <td>${tx.net}</td>
+          <td>${tx.status}</td>
+          <td>${tx.time}</td>
+        </tr>
+      `).join('');
+      document.getElementById('withdrawalRows').innerHTML = item.withdrawals.map(wd => `
+        <tr>
+          <td>${wd.no}</td>
+          <td>${wd.amount}</td>
+          <td>${wd.bank}</td>
+          <td>${wd.status}</td>
+          <td>${wd.reason}</td>
+          <td>${wd.time}</td>
+        </tr>
+      `).join('');
+      drawer.classList.add('open');
+      drawerMask.classList.add('show');
+    };
+
+    function hideDrawer() {
+      drawer.classList.remove('open');
+      drawerMask.classList.remove('show');
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', filterData);
+    document.getElementById('resetBtn').addEventListener('click', resetFilters);
+    document.getElementById('goWithdraw').addEventListener('click', () => alert('原型演示：此处可跳转到“提现记录”页面。'));
+    closeDrawer.addEventListener('click', hideDrawer);
+    drawerMask.addEventListener('click', hideDrawer);
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    renderTable(merchants);
+  </script>
+</body>
+</html>
