@@ -51,7 +51,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>BYKOL 项目原型门户导航</h1>
+            <h1>收单 项目原型门户导航</h1>
             <p class="subtitle">包含paypal收单运营端、白标收单 演示模块</p>
         </div>
 
