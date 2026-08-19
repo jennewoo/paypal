@@ -117,6 +117,35 @@
       align-items: center;
       gap: 12px;
     }
+    .channel-switch {
+      display: inline-flex;
+      align-items: stretch;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .channel-btn {
+      height: 38px;
+      padding: 0 18px;
+      border: 0;
+      border-right: 1px solid var(--border);
+      background: #fff;
+      color: #4b5563;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .channel-btn:last-child { border-right: 0; }
+    .channel-btn.active {
+      background: #2d8cf0;
+      color: #fff;
+    }
+    .channel-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-right: 2px;
+    }
     .chip {
       padding: 8px 12px;
       border: 1px solid var(--border);
@@ -517,7 +546,7 @@
     <aside class="sidebar">
       <div class="brand">
         <h1>运营管理后台</h1>
-        <p>PayPal 收单商户资金管理</p>
+        <p>收单商户资金管理</p>
       </div>
       <div class="nav-group">
         <div class="nav-item active"><span class="dot"></span>收单商户资金统计</div>
@@ -528,11 +557,15 @@
       <div class="topbar">
         <div class="topbar-left">
           <h2>收单商户资金统计</h2>
-          <p>面向运营人员查看所有收单商户的余额、提现与累计收单情况，可快速定位商户并查看资金明细。</p>
+          <p>查看不同收单渠道下商户的余额、提现与累计收单情况，可切换渠道快速查看对应资金数据。</p>
         </div>
         <div class="topbar-right">
+          <span class="channel-label">收单渠道</span>
+          <div class="channel-switch" aria-label="收单渠道切换">
+            <button class="channel-btn active" data-channel="paypal">PayPal</button>
+            <button class="channel-btn" data-channel="wildcard">Wildcard Pay</button>
+          </div>
           <div class="chip">统计币种：USD</div>
-          <div class="chip">统计周期：累计 + 近30天活跃</div>
           <div class="avatar">OP</div>
         </div>
       </div>
@@ -541,46 +574,46 @@
         <section class="cards">
           <div class="card purple">
             <div class="card-head"><span class="status-dot">¥</span><span>可提现总金额</span></div>
-            <div class="money"><strong>$ 128,920.32</strong>USD</div>
+            <div class="money"><strong id="statAvailable">$ 128,920.32</strong><span id="statAvailableCurrency">USD</span></div>
             <button class="btn-primary" id="goWithdraw">查看提现记录</button>
           </div>
           <div class="card orange">
             <div class="card-head"><span class="status-dot">!</span><span>提现中金额</span></div>
-            <div class="money"><strong>$ 19,880.00</strong>USD</div>
-            <div class="subline">当前共有 23 笔银行处理中提现，预计 1-2 个工作日内到账</div>
+            <div class="money"><strong id="statWithdrawing">$ 19,880.00</strong><span id="statWithdrawingCurrency">USD</span></div>
+            <div class="subline" id="statWithdrawingHint">当前共有 23 笔银行处理中提现，预计 1-2 个工作日内到账</div>
           </div>
           <div class="card blue">
             <div class="card-head"><span class="status-dot">✓</span><span>已提现金额</span></div>
-            <div class="money"><strong>$ 1,826,543.66</strong>USD</div>
-            <div class="subline">累计 1,426 笔提现已成功结算至商户银行账户</div>
+            <div class="money"><strong id="statWithdrawn">$ 1,826,543.66</strong><span id="statWithdrawnCurrency">USD</span></div>
+            <div class="subline" id="statWithdrawnHint">累计 1,426 笔提现已成功结算至商户银行账户</div>
           </div>
           <div class="card green">
             <div class="card-head"><span class="status-dot">$</span><span>收单总金额</span></div>
-            <div class="money"><strong>$ 1,975,344.98</strong>USD</div>
-            <div class="subline">累计所有收单商户成功收单总金额</div>
+            <div class="money"><strong id="statCollected">$ 1,975,344.98</strong><span id="statCollectedCurrency">USD</span></div>
+            <div class="subline" id="statCollectedHint">累计所有收单商户成功收单总金额</div>
           </div>
         </section>
 
         <section class="stats-row">
           <div class="mini-card">
             <div class="label">收单商户数</div>
-            <div class="value">126</div>
+            <div class="value" id="miniMerchantCount">126</div>
             <div class="hint">当前已接入并可正常收单</div>
           </div>
           <div class="mini-card">
             <div class="label">有余额商户</div>
-            <div class="value">83</div>
+            <div class="value" id="miniBalanceCount">83</div>
             <div class="hint">当前可提现金额大于 0</div>
           </div>
           <div class="mini-card">
             <div class="label">近30天活跃商户</div>
-            <div class="value">97</div>
+            <div class="value" id="miniActiveCount">97</div>
             <div class="hint">近 30 天有新增收单</div>
           </div>
           <div class="mini-card">
             <div class="label">近30天收单金额</div>
-            <div class="value">$286K</div>
-            <div class="hint">较上月 <span class="highlight">+18.6%</span></div>
+            <div class="value" id="miniCollected30">$286K</div>
+            <div class="hint">较上月 <span class="highlight" id="miniGrowth">+18.6%</span></div>
           </div>
         </section>
 
@@ -588,7 +621,7 @@
           <div class="panel-header">
             <div class="panel-title">
               <h3>商户资金列表</h3>
-              <p>支持按商户别名、店铺名称、PayPal 账号、币种和时间范围筛选；列表展示当前余额与累计资金数据。</p>
+              <p id="listDescription">支持按商户别名、店铺名称、PayPal 账号、币种和时间范围筛选；列表展示当前余额与累计资金数据。</p>
             </div>
             <div class="toolbar">
               <button class="btn">重置筛选</button>
@@ -607,8 +640,8 @@
               <input class="control" id="storeSearch" placeholder="请输入店铺名称" />
             </div>
             <div class="field">
-              <label>PayPal账号</label>
-              <input class="control" id="paypalSearch" placeholder="请输入 PayPal 账号" />
+              <label id="accountSearchLabel">PayPal账号</label>
+              <input class="control" id="accountSearch" placeholder="请输入 PayPal 账号" />
             </div>
             <div class="field">
               <label>币种</label>
@@ -635,7 +668,7 @@
                 <tr>
                   <th style="width: 180px;">商户别名</th>
                   <th style="width: 220px;">店铺名称</th>
-                  <th style="width: 200px;">PayPal账号</th>
+                  <th style="width: 200px;" id="accountColumnHeader">PayPal账号</th>
                   <th style="width: 72px;">币种</th>
                   <th style="width: 130px;">可提现金额</th>
                   <th style="width: 130px;">提现中金额</th>
@@ -698,7 +731,7 @@
       <div class="info-panel">
         <div class="info-row"><div class="key">商户别名</div><div id="infoName">-</div></div>
         <div class="info-row"><div class="key">店铺名称</div><div id="infoStoreName">-</div></div>
-        <div class="info-row"><div class="key">PayPal主账号</div><div id="infoPaypal">-</div></div>
+        <div class="info-row"><div class="key" id="infoAccountLabel">PayPal主账号</div><div id="infoAccount">-</div></div>
         <div class="info-row"><div class="key">最近收单时间</div><div id="infoRecent">-</div></div>
       </div>
 
@@ -714,7 +747,7 @@
             <table class="mini-table">
               <thead>
                 <tr>
-                  <th>PayPal账号</th>
+                  <th id="detailAccountHeader">PayPal账号</th>
                   <th>币种</th>
                   <th>可提现</th>
                   <th>提现中</th>
@@ -768,7 +801,7 @@
   </aside>
 
   <script>
-    const merchants = [
+    const paypalMerchants = [
       {
         id: 1,
         name: 'FAINE',
@@ -924,11 +957,100 @@
       }
     ];
 
+    const wildcardMerchants = [
+      {
+        id: 101, name: 'NOVA', storeName: 'Nova Living', account: 'WC-84002158', currency: 'USD',
+        available: 6840.25, withdrawing: 920.00, withdrawn: 28450.00, collected30: 12280.45, collectedTotal: 36210.25, recentTime: '2026-08-18 10:12',
+        accounts: [
+          { account: 'WC-84002158', currency: 'USD', available: 6840.25, withdrawing: 920.00, withdrawn: 28450.00, total: 36210.25 }
+        ],
+        transactions: [
+          { no: 'WCP20260818101201', order: 'NOVA-20260818-001', amount: '$2,480.00', fee: '$111.60', net: '$2,368.40', status: 'SUCCESS', time: '2026-08-18 10:12' },
+          { no: 'WCP20260817193408', order: 'NOVA-20260817-008', amount: '$1,960.45', fee: '$88.22', net: '$1,872.23', status: 'SUCCESS', time: '2026-08-17 19:34' }
+        ],
+        withdrawals: [
+          { no: 'WCW202608180006', amount: '$920.00', bank: 'Chase Bank (****4186)', status: '处理中', reason: '-', time: '2026-08-18 10:35' }
+        ]
+      },
+      {
+        id: 102, name: 'URBAN', storeName: 'Urban Gear Market', account: 'WC-84002674', currency: 'USD',
+        available: 18560.80, withdrawing: 0, withdrawn: 88600.00, collected30: 31840.20, collectedTotal: 107160.80, recentTime: '2026-08-18 09:48',
+        accounts: [
+          { account: 'WC-84002674', currency: 'USD', available: 11200.80, withdrawing: 0, withdrawn: 52600.00, total: 63800.80 },
+          { account: 'WC-84002675', currency: 'USD', available: 7360.00, withdrawing: 0, withdrawn: 36000.00, total: 43360.00 }
+        ],
+        transactions: [
+          { no: 'WCP20260818094803', order: 'URB-20260818-003', amount: '$8,240.00', fee: '$370.80', net: '$7,869.20', status: 'SUCCESS', time: '2026-08-18 09:48' },
+          { no: 'WCP20260817222112', order: 'URB-20260817-012', amount: '$5,380.20', fee: '$242.11', net: '$5,138.09', status: 'SUCCESS', time: '2026-08-17 22:21' }
+        ],
+        withdrawals: [
+          { no: 'WCW202608120011', amount: '$8,500.00', bank: 'Citibank (****6723)', status: '成功', reason: '-', time: '2026-08-12 15:22' }
+        ]
+      },
+      {
+        id: 103, name: 'LUMI', storeName: 'Lumi Beauty Lab', account: 'WC-84003109', currency: 'USD',
+        available: 4220.00, withdrawing: 580.00, withdrawn: 16420.00, collected30: 7580.00, collectedTotal: 21220.00, recentTime: '2026-08-17 21:05',
+        accounts: [
+          { account: 'WC-84003109', currency: 'USD', available: 4220.00, withdrawing: 580.00, withdrawn: 16420.00, total: 21220.00 }
+        ],
+        transactions: [
+          { no: 'WCP20260817210502', order: 'LUMI-20260817-002', amount: '$1,980.00', fee: '$89.10', net: '$1,890.90', status: 'SUCCESS', time: '2026-08-17 21:05' }
+        ],
+        withdrawals: [
+          { no: 'WCW202608170005', amount: '$580.00', bank: 'Bank of America (****2197)', status: '处理中', reason: '-', time: '2026-08-17 22:10' }
+        ]
+      },
+      {
+        id: 104, name: 'MINT', storeName: 'Mint Home Select', account: 'WC-84003812', currency: 'USD',
+        available: 9720.60, withdrawing: 1450.00, withdrawn: 42500.00, collected30: 18620.10, collectedTotal: 53670.60, recentTime: '2026-08-17 16:42',
+        accounts: [
+          { account: 'WC-84003812', currency: 'USD', available: 6520.60, withdrawing: 1450.00, withdrawn: 27500.00, total: 35470.60 },
+          { account: 'WC-84003819', currency: 'USD', available: 3200.00, withdrawing: 0, withdrawn: 15000.00, total: 18200.00 }
+        ],
+        transactions: [
+          { no: 'WCP20260817164206', order: 'MINT-20260817-006', amount: '$4,620.10', fee: '$207.90', net: '$4,412.20', status: 'SUCCESS', time: '2026-08-17 16:42' }
+        ],
+        withdrawals: [
+          { no: 'WCW202608160019', amount: '$1,450.00', bank: 'Wells Fargo (****9032)', status: '处理中', reason: '-', time: '2026-08-16 17:15' }
+        ]
+      },
+      {
+        id: 105, name: 'KITE', storeName: 'Kite Outdoor', account: 'WC-84004428', currency: 'USD',
+        available: 28640.10, withdrawing: 3200.00, withdrawn: 126800.00, collected30: 46820.60, collectedTotal: 158640.10, recentTime: '2026-08-18 08:36',
+        accounts: [
+          { account: 'WC-84004428', currency: 'USD', available: 18640.10, withdrawing: 2200.00, withdrawn: 76800.00, total: 97640.10 },
+          { account: 'WC-84004431', currency: 'USD', available: 10000.00, withdrawing: 1000.00, withdrawn: 50000.00, total: 61000.00 }
+        ],
+        transactions: [
+          { no: 'WCP20260818083609', order: 'KITE-20260818-009', amount: '$11,850.60', fee: '$533.28', net: '$11,317.32', status: 'SUCCESS', time: '2026-08-18 08:36' }
+        ],
+        withdrawals: [
+          { no: 'WCW202608180002', amount: '$3,200.00', bank: 'Chase Bank (****0068)', status: '处理中', reason: '-', time: '2026-08-18 08:58' }
+        ]
+      }
+    ];
+
+    const channelStats = {
+      paypal: {
+        label: 'PayPal', merchants: paypalMerchants, available: 128920.32, withdrawing: 19880.00, withdrawn: 1826543.66, collected: 1975344.98,
+        withdrawingHint: '当前共有 23 笔银行处理中提现，预计 1-2 个工作日内到账',
+        withdrawnHint: '累计 1,426 笔提现已成功结算至商户银行账户', merchantCount: 126, balanceCount: 83, activeCount: 97, collected30Text: '$286K', growth: '+18.6%'
+      },
+      wildcard: {
+        label: 'Wildcard Pay', merchants: wildcardMerchants, available: 67981.75, withdrawing: 6150.00, withdrawn: 302770.00, collected: 376901.75,
+        withdrawingHint: '当前共有 8 笔提现处理中，预计 1-2 个工作日内到账',
+        withdrawnHint: '累计 286 笔提现已成功结算至商户银行账户', merchantCount: 38, balanceCount: 31, activeCount: 34, collected30Text: '$117K', growth: '+12.4%'
+      }
+    };
+
+    let currentChannel = 'paypal';
+    let merchants = channelStats[currentChannel].merchants;
+
     const tbody = document.getElementById('merchantTableBody');
     const totalCount = document.getElementById('totalCount');
     const merchantSearch = document.getElementById('merchantSearch');
     const storeSearch = document.getElementById('storeSearch');
-    const paypalSearch = document.getElementById('paypalSearch');
+    const accountSearch = document.getElementById('accountSearch');
     const currencyFilter = document.getElementById('currencyFilter');
     const dateFilter = document.getElementById('dateFilter');
 
@@ -947,7 +1069,7 @@
             </div>
           </td>
           <td>${item.storeName}</td>
-          <td>${item.paypal}</td>
+          <td>${item.paypal || item.account}</td>
           <td>${item.currency}</td>
           <td class="money-cell">${formatMoney(item.available, item.currency)}</td>
           <td class="money-cell">${formatMoney(item.withdrawing, item.currency)}</td>
@@ -964,17 +1086,18 @@
     function filterData() {
       const merchantKey = merchantSearch.value.trim().toLowerCase();
       const storeKey = storeSearch.value.trim().toLowerCase();
-      const paypalKey = paypalSearch.value.trim().toLowerCase();
+      const accountKey = accountSearch.value.trim().toLowerCase();
       const currency = currencyFilter.value;
       const date = dateFilter.value;
 
       const result = merchants.filter(item => {
         const matchMerchant = !merchantKey || item.name.toLowerCase().includes(merchantKey);
         const matchStore = !storeKey || item.storeName.toLowerCase().includes(storeKey);
-        const matchPaypal = !paypalKey || item.paypal.toLowerCase().includes(paypalKey);
+        const accountValue = (item.paypal || item.account || '').toLowerCase();
+        const matchAccount = !accountKey || accountValue.includes(accountKey);
         const matchCurrency = !currency || item.currency === currency;
         const matchDate = !date || item.recentTime.startsWith(date);
-        return matchMerchant && matchStore && matchPaypal && matchCurrency && matchDate;
+        return matchMerchant && matchStore && matchAccount && matchCurrency && matchDate;
       });
       renderTable(result);
     }
@@ -982,7 +1105,7 @@
     function resetFilters() {
       merchantSearch.value = '';
       storeSearch.value = '';
-      paypalSearch.value = '';
+      accountSearch.value = '';
       currencyFilter.value = '';
       dateFilter.value = '';
       renderTable(merchants);
@@ -995,18 +1118,18 @@
       const item = merchants.find(m => m.id === id);
       if (!item) return;
       document.getElementById('drawerTitle').textContent = `${item.name} · 资金详情`;
-      document.getElementById('drawerSubtitle').textContent = `${item.storeName} · 可查看 ${item.accountCount} 个 PayPal 收单账号及近期资金流水`;
+      document.getElementById('drawerSubtitle').textContent = `${item.storeName} · 可查看 ${item.accounts.length} 个 ${channelStats[currentChannel].label} 收单账号及近期资金流水`;
       document.getElementById('detailAvailable').textContent = formatMoney(item.available, item.currency);
       document.getElementById('detailWithdrawing').textContent = formatMoney(item.withdrawing, item.currency);
       document.getElementById('detailWithdrawn').textContent = formatMoney(item.withdrawn, item.currency);
       document.getElementById('detailCollected').textContent = formatMoney(item.collectedTotal, item.currency);
       document.getElementById('infoName').textContent = item.name;
       document.getElementById('infoStoreName').textContent = item.storeName;
-      document.getElementById('infoPaypal').textContent = item.paypal;
+      document.getElementById('infoAccount').textContent = item.paypal || item.account;
       document.getElementById('infoRecent').textContent = item.recentTime;
       document.getElementById('accountRows').innerHTML = item.accounts.map(acc => `
         <tr>
-          <td>${acc.paypal}</td>
+          <td>${acc.paypal || acc.account}</td>
           <td>${acc.currency}</td>
           <td class="money-cell">${formatMoney(acc.available, acc.currency)}</td>
           <td class="money-cell">${formatMoney(acc.withdrawing, acc.currency)}</td>
@@ -1039,6 +1162,39 @@
       drawerMask.classList.add('show');
     };
 
+    function updateChannelUI(channel) {
+      currentChannel = channel;
+      const config = channelStats[channel];
+      merchants = config.merchants;
+
+      document.querySelectorAll('.channel-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.channel === channel);
+      });
+
+      document.getElementById('statAvailable').textContent = formatMoney(config.available, 'USD');
+      document.getElementById('statWithdrawing').textContent = formatMoney(config.withdrawing, 'USD');
+      document.getElementById('statWithdrawn').textContent = formatMoney(config.withdrawn, 'USD');
+      document.getElementById('statCollected').textContent = formatMoney(config.collected, 'USD');
+      document.getElementById('statWithdrawingHint').textContent = config.withdrawingHint;
+      document.getElementById('statWithdrawnHint').textContent = config.withdrawnHint;
+      document.getElementById('miniMerchantCount').textContent = config.merchantCount;
+      document.getElementById('miniBalanceCount').textContent = config.balanceCount;
+      document.getElementById('miniActiveCount').textContent = config.activeCount;
+      document.getElementById('miniCollected30').textContent = config.collected30Text;
+      document.getElementById('miniGrowth').textContent = config.growth;
+
+      const accountLabel = channel === 'paypal' ? 'PayPal账号' : 'Wildcard Pay账号';
+      document.getElementById('accountSearchLabel').textContent = accountLabel;
+      document.getElementById('accountSearch').placeholder = `请输入 ${accountLabel}`;
+      document.getElementById('accountColumnHeader').textContent = accountLabel;
+      document.getElementById('detailAccountHeader').textContent = accountLabel;
+      document.getElementById('infoAccountLabel').textContent = channel === 'paypal' ? 'PayPal主账号' : 'Wildcard Pay主账号';
+      document.getElementById('listDescription').textContent = `支持按商户别名、店铺名称、${accountLabel}、币种和时间范围筛选；列表展示当前余额与累计资金数据。`;
+
+      resetFilters();
+      hideDrawer();
+    }
+
     function hideDrawer() {
       drawer.classList.remove('open');
       drawerMask.classList.remove('show');
@@ -1046,7 +1202,10 @@
 
     document.getElementById('searchBtn').addEventListener('click', filterData);
     document.getElementById('resetBtn').addEventListener('click', resetFilters);
-    document.getElementById('goWithdraw').addEventListener('click', () => alert('原型演示：此处可跳转到“提现记录”页面。'));
+    document.getElementById('goWithdraw').addEventListener('click', () => alert(`原型演示：查看 ${channelStats[currentChannel].label} 渠道提现记录。`));
+    document.querySelectorAll('.channel-btn').forEach(btn => {
+      btn.addEventListener('click', () => updateChannelUI(btn.dataset.channel));
+    });
     closeDrawer.addEventListener('click', hideDrawer);
     drawerMask.addEventListener('click', hideDrawer);
 
@@ -1059,7 +1218,7 @@
       });
     });
 
-    renderTable(merchants);
+    updateChannelUI('paypal');
   </script>
 </body>
 </html>
