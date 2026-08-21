@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>收单钱包 · 交互原型</title>
+  <style>
+    :root {
+      --brand: #1769e0;
+      --brand-deep: #0d55c8;
+      --brand-soft: #edf5ff;
+      --ink: #162033;
+      --muted: #68758a;
+      --line: #e4e9f1;
+      --canvas: #f5f7fb;
+      --card: #ffffff;
+      --green: #13a675;
+      --orange: #eb8b16;
+      --purple: #7658e8;
+      --red: #dc4b5b;
+      --shadow: 0 10px 28px rgba(24, 40, 72, .06);
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--canvas); }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      height: 68px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: grid; place-items: center;
+      color: #fff; font-size: 17px; font-weight: 800;
+      background: linear-gradient(145deg, #2479ee, #0c58cf);
+      box-shadow: 0 7px 16px rgba(23, 105, 224, .22);
+    }
+    .brand-title { font-size: 19px; font-weight: 700; letter-spacing: -.2px; }
+    .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .updated { color: var(--muted); font-size: 12px; }
+    .icon-btn {
+      border: 1px solid var(--line); background: #fff; color: #41506a;
+      border-radius: 9px; padding: 8px 12px;
+    }
+    .icon-btn:hover { background: #f8fafc; border-color: #cfd7e5; }
+
+    main { max-width: 1540px; margin: 0 auto; padding: 28px 32px 44px; }
+    .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 22px; }
+    h1 { margin: 0; font-size: 26px; line-height: 1.3; letter-spacing: -.5px; }
+    .page-desc { color: var(--muted); margin-top: 7px; }
+    .channel-badge {
+      display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px;
+      color: #174f9e; background: #edf5ff; border: 1px solid #d6e6fb;
+      border-radius: 9px; font-size: 13px; font-weight: 650;
+    }
+    .channel-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
+
+    .notice {
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      padding: 14px 16px; margin-bottom: 18px;
+      background: #f0f6ff; border: 1px solid #d7e7ff; border-radius: 11px;
+      color: #33445e;
+    }
+    .notice-main { display: flex; align-items: flex-start; gap: 11px; line-height: 1.55; }
+    .info-dot {
+      flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%;
+      display: grid; place-items: center; background: var(--brand); color: white; font-size: 12px; margin-top: 1px;
+    }
+    .notice strong { color: #173969; }
+    .notice button { border: 0; color: var(--brand); background: transparent; white-space: nowrap; font-weight: 600; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .metric {
+      position: relative; overflow: hidden; min-height: 164px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 13px;
+      padding: 19px 20px; box-shadow: var(--shadow);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .metric:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(24, 40, 72, .1); }
+    .metric::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--tone); }
+    .metric-label { display: flex; align-items: center; gap: 8px; color: #59667b; font-weight: 600; }
+    .metric-symbol { color: var(--tone); font-size: 17px; }
+    .metric-value { margin-top: 23px; font-size: clamp(24px, 2vw, 32px); font-weight: 750; letter-spacing: -.7px; white-space: nowrap; }
+    .currency { font-size: 13px; color: #8791a2; font-weight: 500; letter-spacing: 0; margin-left: 4px; }
+    .metric-note { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef1f5; color: #8a94a5; font-size: 12px; line-height: 1.45; }
+    .metric.available .metric-note { border: 0; padding-top: 0; margin-top: 9px; }
+    .withdraw-btn {
+      width: 100%; padding: 9px; border: 0; border-radius: 8px; margin-top: 12px;
+      color: #fff; background: var(--brand); font-weight: 650;
+    }
+    .withdraw-btn:hover { background: var(--brand-deep); }
+
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 13px; box-shadow: var(--shadow); }
+    .panel-head { padding: 20px 22px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .panel-title { font-size: 17px; font-weight: 700; }
+    .panel-sub { color: var(--muted); font-size: 12px; margin-top: 5px; }
+    .filter-area { padding: 0 22px 18px; }
+    .filters { display: grid; grid-template-columns: 1.25fr 1.25fr .85fr 1.35fr auto; gap: 10px; }
+    .control { position: relative; }
+    .control input, .control select {
+      width: 100%; height: 40px; color: #263248; background: #fff;
+      border: 1px solid #d8dfe9; border-radius: 8px; padding: 0 12px; outline: none;
+    }
+    .control input:focus, .control select:focus { border-color: #80aff1; box-shadow: 0 0 0 3px rgba(23, 105, 224, .08); }
+    .control input::placeholder { color: #a4adba; }
+    .date-control { display: grid; grid-template-columns: 1fr 12px 1fr; align-items: center; gap: 6px; }
+    .date-control span { text-align: center; color: #a1a9b6; }
+    .filter-actions { display: flex; gap: 8px; }
+    .btn { height: 40px; padding: 0 17px; border-radius: 8px; border: 1px solid #d7deea; background: #fff; color: #40506a; font-weight: 600; }
+    .btn:hover { background: #f8fafc; }
+    .btn.primary { color: #fff; background: var(--brand); border-color: var(--brand); }
+    .btn.primary:hover { background: var(--brand-deep); }
+
+    .table-wrap { overflow-x: auto; border-top: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; min-width: 1050px; }
+    th { padding: 13px 16px; background: #f8f9fc; color: #5d687a; font-size: 12px; text-align: left; font-weight: 650; white-space: nowrap; }
+    td { padding: 16px; border-top: 1px solid #edf0f4; color: #2b374b; vertical-align: middle; }
+    tbody tr:hover { background: #fbfcff; }
+    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+    .amount { font-weight: 650; font-variant-numeric: tabular-nums; }
+    .account { color: #5d6980; }
+    .status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status.success { color: #0f956a; background: #eaf8f3; }
+    .status.processing { color: #cc7711; background: #fff5e7; }
+    .status.failed { color: #cf4555; background: #fff0f2; }
+    .status.cancelled { color: #768196; background: #f0f2f5; }
+    .link-btn { border: 0; background: transparent; color: var(--brand); font-weight: 600; padding: 4px; }
+    .empty { padding: 70px 20px; text-align: center; color: var(--muted); display: none; }
+    .empty-icon { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; margin: 0 auto 13px; background: #f0f4fa; font-size: 24px; }
+    .table-foot { min-height: 61px; padding: 12px 20px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .result-count { color: var(--muted); font-size: 13px; }
+    .pages { display: flex; align-items: center; gap: 7px; }
+    .page-btn { width: 34px; height: 34px; border: 1px solid #dce2eb; background: #fff; border-radius: 7px; color: #637086; }
+    .page-btn.active { border-color: var(--brand); color: #fff; background: var(--brand); }
+    .page-btn:disabled { opacity: .4; cursor: default; }
+
+    .drawer-mask, .modal-mask { position: fixed; inset: 0; z-index: 50; background: rgba(17, 27, 45, .38); opacity: 0; visibility: hidden; transition: .2s ease; }
+    .drawer-mask.open, .modal-mask.open { opacity: 1; visibility: visible; }
+    .drawer {
+      position: absolute; right: 0; top: 0; bottom: 0; width: min(520px, 100%); background: #fff;
+      transform: translateX(100%); transition: transform .25s ease; box-shadow: -16px 0 40px rgba(18, 31, 53, .15);
+    }
+    .drawer-mask.open .drawer { transform: translateX(0); }
+    .drawer-head { padding: 23px 25px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+    .drawer-title { font-size: 18px; font-weight: 700; }
+    .close-btn { border: 0; background: #f1f4f8; width: 32px; height: 32px; border-radius: 8px; font-size: 19px; color: #607087; }
+    .drawer-body { padding: 24px 25px; overflow: auto; height: calc(100% - 79px); }
+    .detail-amount { font-size: 28px; font-weight: 750; margin: 8px 0 24px; }
+    .detail-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px; padding: 20px; border-radius: 11px; background: #f7f9fc; }
+    .detail-label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .detail-value { line-height: 1.5; word-break: break-all; }
+    .progress-title { display: flex; justify-content: space-between; margin: 28px 0 10px; font-weight: 650; }
+    .timeline { border-left: 2px solid #dce5f2; margin-left: 6px; padding-left: 22px; }
+    .time-item { position: relative; padding-bottom: 22px; }
+    .time-item::before { content: ""; position: absolute; left: -29px; top: 3px; width: 10px; height: 10px; border: 2px solid #fff; border-radius: 50%; background: #bbc5d3; box-shadow: 0 0 0 2px #dce5f2; }
+    .time-item.done::before { background: var(--brand); box-shadow: 0 0 0 2px #bcd5f7; }
+    .time-name { font-weight: 600; }
+    .time-desc { color: var(--muted); font-size: 12px; margin-top: 5px; line-height: 1.5; }
+
+    .modal { width: min(480px, calc(100% - 32px)); background: #fff; border-radius: 15px; box-shadow: 0 24px 60px rgba(20, 34, 57, .2); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -46%); transition: transform .2s ease; }
+    .modal-mask.open .modal { transform: translate(-50%, -50%); }
+    .modal-head { padding: 21px 23px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-body { padding: 23px; }
+    .balance-box { display: flex; justify-content: space-between; background: #f3f7fd; padding: 13px 14px; border-radius: 9px; margin-bottom: 19px; color: #526079; }
+    .field-label { display: block; font-weight: 600; margin-bottom: 8px; }
+    .amount-input { display: flex; border: 1px solid #d5dde9; border-radius: 9px; height: 46px; overflow: hidden; }
+    .amount-input span { display: grid; place-items: center; min-width: 46px; background: #f7f9fc; border-right: 1px solid #e1e6ee; font-weight: 700; }
+    .amount-input input { flex: 1; min-width: 0; border: 0; outline: 0; padding: 0 12px; font-size: 17px; }
+    .amount-input button { border: 0; color: var(--brand); background: #fff; padding: 0 12px; font-weight: 600; }
+    .form-hint { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 11px 0 20px; }
+    .bank-box { border: 1px solid var(--line); padding: 13px 14px; border-radius: 9px; display: flex; align-items: center; gap: 12px; }
+    .bank-logo { width: 35px; height: 35px; border-radius: 8px; display: grid; place-items: center; background: #173b70; color: #fff; font-weight: 700; }
+    .bank-name { font-weight: 600; }
+    .bank-account { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 23px; }
+    .toast { position: fixed; z-index: 80; left: 50%; top: 84px; transform: translate(-50%, -16px); background: #1d2a40; color: #fff; padding: 11px 16px; border-radius: 9px; box-shadow: 0 12px 28px rgba(20, 32, 51, .2); opacity: 0; visibility: hidden; transition: .2s ease; }
+    .toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+
+    @media (max-width: 1180px) {
+      .metric-grid { grid-template-columns: repeat(3, 1fr); }
+      .filters { grid-template-columns: 1fr 1fr 1fr; }
+      .filter-actions { grid-column: span 3; justify-content: flex-end; }
+    }
+    @media (max-width: 760px) {
+      .topbar { height: 60px; padding: 0 16px; }
+      .brand-sub, .updated { display: none; }
+      main { padding: 20px 14px 32px; }
+      .page-head { align-items: flex-start; flex-direction: column; }
+      .metric-grid { grid-template-columns: 1fr; }
+      .metric { min-height: 145px; }
+      .filters { grid-template-columns: 1fr; }
+      .filter-actions { grid-column: auto; }
+      .date-control { grid-template-columns: 1fr 10px 1fr; }
+      .notice { align-items: flex-start; }
+      .notice button { display: none; }
+      .panel-head, .filter-area { padding-left: 15px; padding-right: 15px; }
+      .table-foot { align-items: flex-start; flex-direction: column; }
+      .detail-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">W</div>
+      <div>
+        <div class="brand-title">收单钱包</div>
+        <div class="brand-sub">Acquiring Wallet</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="updated" id="updatedText">数据更新于 2026-08-21 10:26</span>
+      <button class="icon-btn" id="refreshBtn" aria-label="刷新数据">↻ 刷新</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-head">
+      <div>
+        <h1>资金概览</h1>
+        <div class="page-desc">查看收单资金、循环保证金及提现进度</div>
+      </div>
+      <div class="channel-badge">PayPal 渠道</div>
+    </section>
+
+    <div class="notice">
+      <div class="notice-main">
+        <span class="info-dot">i</span>
+        <div><strong>资金规则：</strong>保证金按最近 60 天成功订单金额的 10% 循环冻结，到期后自动转入可提现金额；提现到账时效为 <strong>T+3 个工作日</strong>。</div>
+      </div>
+      <button id="ruleBtn">查看规则详情 →</button>
+    </div>
+
+    <section class="metric-grid" id="metricGrid">
+      <article class="metric" style="--tone:#13a675">
+        <div class="metric-label"><span class="metric-symbol">▣</span>收单总金额</div>
+        <div class="metric-value" data-key="total"></div>
+        <div class="metric-note">累计成功收单金额</div>
+      </article>
+      <article class="metric" style="--tone:#7658e8">
+        <div class="metric-label"><span class="metric-symbol">◆</span>保证金</div>
+        <div class="metric-value" data-key="reserve"></div>
+        <div class="metric-note">近 60 天订单金额的 10% 循环冻结</div>
+      </article>
+      <article class="metric available" style="--tone:#1769e0">
+        <div class="metric-label"><span class="metric-symbol">▤</span>可提现金额</div>
+        <div class="metric-value" data-key="available"></div>
+        <button class="withdraw-btn" id="withdrawBtn">发起提现</button>
+      </article>
+      <article class="metric" style="--tone:#eb8b16">
+        <div class="metric-label"><span class="metric-symbol">◷</span>提现中金额</div>
+        <div class="metric-value" data-key="processing"></div>
+        <div class="metric-note">已申请，预计 T+3 个工作日内到账</div>
+      </article>
+      <article class="metric" style="--tone:#4c8ff5">
+        <div class="metric-label"><span class="metric-symbol">✓</span>已提现金额</div>
+        <div class="metric-value" data-key="withdrawn"></div>
+        <div class="metric-note">累计成功结算至银行账户</div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">提现记录</div>
+          <div class="panel-sub">展示 PayPal 渠道的提现申请</div>
+        </div>
+        <button class="btn" id="exportBtn">导出记录</button>
+      </div>
+      <div class="filter-area">
+        <div class="filters">
+          <div class="control"><input id="serialFilter" type="search" placeholder="交易流水号" aria-label="交易流水号" /></div>
+          <div class="control"><input id="accountFilter" type="search" placeholder="银行账号后四位" aria-label="银行账号后四位" /></div>
+          <div class="control">
+            <select id="statusFilter" aria-label="交易状态">
+              <option value="">全部状态</option>
+              <option value="处理中">处理中</option>
+              <option value="已到账">已到账</option>
+              <option value="失败">失败</option>
+              <option value="已取消">已取消</option>
+            </select>
+          </div>
+          <div class="date-control">
+            <div class="control"><input id="startDate" type="date" value="2026-07-01" aria-label="开始日期" /></div>
+            <span>—</span>
+            <div class="control"><input id="endDate" type="date" value="2026-08-21" aria-label="结束日期" /></div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn primary" id="searchBtn">查询</button>
+            <button class="btn" id="resetBtn">重置</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap" id="tableWrap">
+        <table>
+          <thead><tr><th>交易流水号</th><th>提现金额</th><th>提现至（银行账号）</th><th>交易状态</th><th>失败原因</th><th>创建时间</th><th>预计/实际到账</th><th>操作</th></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState"><div class="empty-icon">⌕</div><div>未找到符合条件的提现记录</div></div>
+      <div class="table-foot">
+        <span class="result-count" id="resultCount">共 0 条记录</span>
+        <div class="pages" id="pagination"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="drawer-mask" id="detailDrawer">
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="drawer-head"><div class="drawer-title" id="detailTitle">提现详情</div><button class="close-btn" data-close="detailDrawer" aria-label="关闭">×</button></div>
+      <div class="drawer-body" id="detailBody"></div>
+    </aside>
+  </div>
+
+  <div class="modal-mask" id="withdrawModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="withdrawTitle">
+      <div class="modal-head"><div class="modal-title" id="withdrawTitle">发起提现</div><button class="close-btn" data-close="withdrawModal" aria-label="关闭">×</button></div>
+      <div class="modal-body">
+        <div class="balance-box"><span>当前可提现</span><strong id="modalBalance">$0.00 USD</strong></div>
+        <label class="field-label" for="withdrawAmount">提现金额</label>
+        <div class="amount-input"><span>$</span><input id="withdrawAmount" inputmode="decimal" placeholder="最低 100.00" /><button id="allBtn">全部</button></div>
+        <div class="form-hint">提交后将进入银行处理流程，预计 T+3 个工作日到账。演示原型不会发起真实交易。</div>
+        <label class="field-label">提现至</label>
+        <div class="bank-box"><div class="bank-logo">B</div><div><div class="bank-name">Bank of America</div><div class="bank-account">USD 账户 · 尾号 2688</div></div></div>
+        <div class="modal-actions"><button class="btn" data-close="withdrawModal">取消</button><button class="btn primary" id="submitWithdraw">确认提现</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="ruleModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ruleTitle">
+      <div class="modal-head"><div class="modal-title" id="ruleTitle">资金规则说明</div><button class="close-btn" data-close="ruleModal" aria-label="关闭">×</button></div>
+      <div class="modal-body">
+        <div class="timeline">
+          <div class="time-item done"><div class="time-name">订单收款成功（T 日）</div><div class="time-desc">订单金额计入收单总金额，其中 10% 进入循环保证金。</div></div>
+          <div class="time-item done"><div class="time-name">循环保证金（60 天）</div><div class="time-desc">每笔订单对应保证金独立计算 60 天，到期且无争议时自动释放。</div></div>
+          <div class="time-item"><div class="time-name">发起提现（T+3）</div><div class="time-desc">可提现资金申请后进入处理中，通常在 3 个工作日内到达绑定银行账户。</div></div>
+        </div>
+        <div class="modal-actions"><button class="btn primary" data-close="ruleModal">我知道了</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const wallet = {
+      name: 'PayPal', currency: 'USD', symbol: '$',
+      metrics: { total: 1284756.32, reserve: 128475.63, available: 42680.54, processing: 8200, withdrawn: 1105400.15 },
+      records: [
+          ['WD20260819001862', 5200, 'Bank of America · 2688', '处理中', '—', '2026-08-19 14:26', '预计 2026-08-24'],
+          ['WD20260812001651', 12680.35, 'Bank of America · 2688', '已到账', '—', '2026-08-12 09:18', '2026-08-17 16:42'],
+          ['WD20260805001493', 8500, 'Bank of America · 2688', '已到账', '—', '2026-08-05 17:06', '2026-08-10 11:33'],
+          ['WD20260728001326', 3200, 'Bank of America · 2688', '失败', '收款账户信息不一致', '2026-07-28 13:40', '—'],
+          ['WD20260721001182', 15800, 'Bank of America · 2688', '已到账', '—', '2026-07-21 10:12', '2026-07-24 15:20'],
+          ['WD20260715001064', 6900.8, 'Bank of America · 2688', '已取消', '用户主动取消', '2026-07-15 16:28', '—'],
+        ['WD20260708000915', 22450, 'Bank of America · 2688', '已到账', '—', '2026-07-08 08:55', '2026-07-13 10:08']
+      ]
+    };
+
+    let filteredRecords = [];
+    let currentPage = 1;
+    const pageSize = 5;
+    const $ = (selector) => document.querySelector(selector);
+    const money = (value) => `${wallet.symbol} ${value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="currency">${wallet.currency}</span>`;
+
+    function renderMetrics() {
+      document.querySelectorAll('[data-key]').forEach(el => el.innerHTML = money(wallet.metrics[el.dataset.key]));
+      $('#modalBalance').textContent = `${wallet.symbol}${wallet.metrics.available.toLocaleString('en-US', {minimumFractionDigits: 2})} ${wallet.currency}`;
+    }
+
+    function statusClass(status) {
+      return { '已到账': 'success', '处理中': 'processing', '失败': 'failed', '已取消': 'cancelled' }[status] || '';
+    }
+
+    function applyFilters() {
+      const serial = $('#serialFilter').value.trim().toLowerCase();
+      const account = $('#accountFilter').value.trim();
+      const status = $('#statusFilter').value;
+      const start = $('#startDate').value;
+      const end = $('#endDate').value;
+      filteredRecords = wallet.records.filter(r => {
+        const day = r[5].slice(0, 10);
+        return (!serial || r[0].toLowerCase().includes(serial)) && (!account || r[2].includes(account)) && (!status || r[3] === status) && (!start || day >= start) && (!end || day <= end);
+      });
+      currentPage = 1;
+      renderTable();
+    }
+
+    function renderTable() {
+      const start = (currentPage - 1) * pageSize;
+      const rows = filteredRecords.slice(start, start + pageSize);
+      $('#tableBody').innerHTML = rows.map(r => `
+        <tr>
+          <td class="mono">${r[0]}</td><td class="amount">${money(r[1])}</td><td class="account">${r[2]}</td>
+          <td><span class="status ${statusClass(r[3])}">${r[3]}</span></td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td>
+          <td><button class="link-btn" data-detail="${r[0]}">查看</button></td>
+        </tr>`).join('');
+      const isEmpty = filteredRecords.length === 0;
+      $('#tableWrap').style.display = isEmpty ? 'none' : 'block';
+      $('#emptyState').style.display = isEmpty ? 'block' : 'none';
+      $('#resultCount').textContent = `共 ${filteredRecords.length} 条记录`;
+      renderPagination();
+    }
+
+    function renderPagination() {
+      const total = Math.ceil(filteredRecords.length / pageSize);
+      if (!total) { $('#pagination').innerHTML = ''; return; }
+      let html = `<button class="page-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+      for (let i = 1; i <= total; i++) html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      html += `<button class="page-btn" data-page="${currentPage + 1}" ${currentPage === total ? 'disabled' : ''}>›</button>`;
+      $('#pagination').innerHTML = html;
+    }
+
+    function openDetail(id) {
+      const r = wallet.records.find(item => item[0] === id);
+      if (!r) return;
+      const isDone = r[3] === '已到账';
+      $('#detailBody').innerHTML = `
+        <div class="detail-label">提现金额</div><div class="detail-amount">${money(r[1])}</div>
+        <div class="detail-list">
+          <div><div class="detail-label">交易流水号</div><div class="detail-value mono">${r[0]}</div></div>
+          <div><div class="detail-label">交易状态</div><div><span class="status ${statusClass(r[3])}">${r[3]}</span></div></div>
+          <div><div class="detail-label">提现至</div><div class="detail-value">${r[2]}</div></div>
+          <div><div class="detail-label">创建时间</div><div class="detail-value">${r[5]}</div></div>
+          <div><div class="detail-label">到账时间</div><div class="detail-value">${r[6]}</div></div>
+          <div><div class="detail-label">失败原因</div><div class="detail-value">${r[4]}</div></div>
+        </div>
+        <div class="progress-title"><span>处理进度</span><span class="status ${statusClass(r[3])}">${r[3]}</span></div>
+        <div class="timeline">
+          <div class="time-item done"><div class="time-name">提现申请已提交</div><div class="time-desc">${r[5]} · 系统已受理申请</div></div>
+          <div class="time-item ${r[3] !== '已取消' ? 'done' : ''}"><div class="time-name">银行处理中</div><div class="time-desc">按照 T+3 工作日规则处理</div></div>
+          <div class="time-item ${isDone ? 'done' : ''}"><div class="time-name">资金到账</div><div class="time-desc">${isDone ? r[6] : '等待银行返回处理结果'}</div></div>
+        </div>`;
+      $('#detailDrawer').classList.add('open');
+    }
+
+    function showToast(message) {
+      $('#toast').textContent = message;
+      $('#toast').classList.add('show');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 2200);
+    }
+
+    function exportCsv() {
+      if (!filteredRecords.length) return showToast('当前没有可导出的记录');
+      const headers = ['交易流水号','提现金额','币种','提现至','交易状态','失败原因','创建时间','预计/实际到账'];
+      const rows = filteredRecords.map(r => [r[0], r[1].toFixed(2), wallet.currency, r[2], r[3], r[4], r[5], r[6]]);
+      const csv = '\ufeff' + [headers, ...rows].map(row => row.map(v => `"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
+      const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+      const a = document.createElement('a'); a.href = url; a.download = `${wallet.name}_提现记录.csv`; a.click(); URL.revokeObjectURL(url);
+      showToast('提现记录已导出');
+    }
+
+    $('#searchBtn').addEventListener('click', applyFilters);
+    $('#resetBtn').addEventListener('click', () => {
+      $('#serialFilter').value = ''; $('#accountFilter').value = ''; $('#statusFilter').value = '';
+      $('#startDate').value = '2026-07-01'; $('#endDate').value = '2026-08-21'; applyFilters();
+    });
+    $('#tableBody').addEventListener('click', e => { const id = e.target.dataset.detail; if (id) openDetail(id); });
+    $('#pagination').addEventListener('click', e => { const page = Number(e.target.dataset.page); if (page > 0 && page <= Math.ceil(filteredRecords.length/pageSize)) { currentPage = page; renderTable(); } });
+    $('#exportBtn').addEventListener('click', exportCsv);
+    $('#withdrawBtn').addEventListener('click', () => { $('#withdrawAmount').value = ''; $('#withdrawModal').classList.add('open'); });
+    $('#ruleBtn').addEventListener('click', () => $('#ruleModal').classList.add('open'));
+    $('#allBtn').addEventListener('click', () => $('#withdrawAmount').value = wallet.metrics.available.toFixed(2));
+    $('#submitWithdraw').addEventListener('click', () => {
+      const value = Number($('#withdrawAmount').value);
+      if (!value || value < 100) return showToast('单笔提现金额不能低于 100.00 USD');
+      if (value > wallet.metrics.available) return showToast('提现金额不能超过可提现余额');
+      $('#withdrawModal').classList.remove('open'); showToast('提现申请已提交（原型演示）');
+    });
+    document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $('#' + btn.dataset.close).classList.remove('open')));
+    document.querySelectorAll('.drawer-mask,.modal-mask').forEach(mask => mask.addEventListener('click', e => { if (e.target === mask) mask.classList.remove('open'); }));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.open').forEach(el => el.classList.remove('open')); });
+    $('#refreshBtn').addEventListener('click', () => {
+      const d = new Date();
+      $('#updatedText').textContent = `数据更新于 ${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      showToast('数据已刷新');
+    });
+
+    renderMetrics(); applyFilters();
+  </script>
+</body>
+</html>
